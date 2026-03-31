@@ -34,8 +34,11 @@ sudo apt-get install build-essential
 
 ### Ubuntu/Linux
 ```bash
-g++ -o taller taller.cpp -lOpenCL
+g++ taller.cpp -o taller -lOpenCL
+
+./taller
 ```
+
 
 ### Windows (MinGW)
 ```bash

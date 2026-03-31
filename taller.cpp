@@ -1,3 +1,4 @@
+#define CL_TARGET_OPENCL_VERSION 300
 #include <CL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +29,8 @@ int main() {
 
     // Contexto y cola (con profiling)
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
-    cl_command_queue queue = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, NULL);
+    const cl_queue_properties queue_props[] = { CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0 };
+    cl_command_queue queue = clCreateCommandQueueWithProperties(context, device, queue_props, NULL);
 
     // Programa y kernel
     cl_program program = clCreateProgramWithSource(context, 1, &kernelSource, NULL, NULL);
@@ -78,7 +80,7 @@ int main() {
         clSetKernelArg(kernel, 2, sizeof(cl_mem), &dC);
         clSetKernelArg(kernel, 3, sizeof(int), &N);
 
-        size_t globalSize[2] = {N, N};
+        size_t globalSize[2] = {(size_t)N, (size_t)N};
 
         // Ejecutar kernel con medición
         cl_event event;
