@@ -2,12 +2,15 @@
 
 ## 📋 Descripción
 
-Programa que implementa multiplicación de matrices 256×256 utilizando **OpenCL** para paralelización en GPU o CPU. El programa automáticamente detecta dispositivos disponibles y elige el mejor (GPU si está disponible, sino CPU).
+Programa que implementa multiplicación de matrices utilizando **OpenCL** para paralelización en GPU o CPU. Prueba matrices de diferentes tamaños (512×512, 1024×1024, 2048×2048, 4096×4096) con medición de rendimiento en GFLOPS. Valida resultados comparando contra cálculos de referencia en CPU.
 
 ## 🎯 Funcionalidades
 
-- Multiplicación de matrices 256×256 en paralelo
-- Detección automática de dispositivos OpenCL (GPU/CPU)
+- Multiplicación de matrices 512×512 a 4096×4096 en paralelo
+- Múltiples tamaños de prueba para análisis de escalabilidad
+- Profiling de kernel OpenCL con medición de tiempo preciso
+- Cálculo de rendimiento en GFLOPS (Gigas de operaciones por segundo)
+- Validación automática con referencia de CPU
 - Kernel OpenCL optimizado usando NDRange 2D
 - Manejo robusto de errores
 - Generador de números aleatorios para datos de prueba
@@ -31,12 +34,12 @@ sudo apt-get install build-essential
 
 ### Ubuntu/Linux
 ```bash
-g++ -o taller taller -lOpenCL
+g++ -o taller taller.cpp -lOpenCL
 ```
 
 ### Windows (MinGW)
 ```bash
-g++ -o taller.exe taller -lOpenCL
+g++ -o taller.exe taller.cpp -lOpenCL
 ```
 
 ## ▶️ Ejecución
@@ -55,30 +58,38 @@ taller.exe
 
 ### Componentes principales
 
-1. **Kernel OpenCL** (`kernel_src`)
+1. **Kernel OpenCL** (`kernelSource`)
    - Función `matmul`: calcula cada elemento de la matriz resultante
    - Usa 2 dimensiones de threads (filas y columnas)
 
 2. **Inicialización OpenCL**
    - Selecciona plataforma disponible
    - Busca dispositivos GPU/CPU
-   - Crea contexto y comando queue
+   - Crea contexto y comando queue con profiling habilitado
 
 3. **Gestión de memoria**
    - Buffers GPU para matrices A, B y C (read-only, write-only)
-   - Copia de datos precálculados (256×256 floats)
+   - Copia de datos A y B antes de ejecución
 
-4. **Ejecución**
-   - Compila kernel en tiempo de ejecución
-   - Encolola kernel para ejecución paralela
-   - Lee resultado de vuelta a CPU
+4. **Bucle de pruebas**
+   - Itera sobre múltiples tamaños (512, 1024, 2048, 4096)
+   - Genera datos aleatorios para cada tamaño
+   - Calcula referencia de CPU para validación
+   - Ejecuta kernel y mide tiempo con profiling
+
+5. **Validación y medición**
+   - Compara resultados GPU vs CPU (tolerancia 1e-3)
+   - Calcula GFLOPS basado en tiempo del kernel
+   - Reporta corrección de resultados
 
 ## 📊 Especificaciones
 
-- **Tamaño matriz**: 256×256 floats
-- **Memoria**: ~0.75 MB por matriz (total 2.25 MB)
-- **Threads**: 256×256 = 65,536 threads paralelos
+- **Tamaños de matrices**: 512×512, 1024×1024, 2048×2048, 4096×4096
 - **Tipo de dato**: float (32 bits)
+- **Tolerancia de validación**: 1e-3
+- **Medición de tiempo**: Profiling de OpenCL (CL_PROFILING_COMMAND_START/END)
+- **Métricas**: Tiempo en ms, GFLOPS (operaciones de punto flotante por segundo)
+- **Verificación**: Comparación automática GPU vs CPU para cada tamaño
 
 ## 🐛 Solución de Problemas
 
@@ -95,9 +106,12 @@ taller.exe
 
 ## 📝 Notas
 
-- El programa usa valores aleatorios con seed fija (123) para reproducibilidad
-- Assertions verifican que las dimensiones sean correctas
-- Libera todos los recursos OpenCL adecuadamente
+- El programa prueba 4 diferentes tamaños de matrices en secuencia
+- Cada iteración genera datos aleatorios independientes
+- La validación CPU es necesaria pero puede ser lenta para matrices grandes
+- El profiling de OpenCL requiere que el dispositivo soporte time_frequency
+- Los GFLOPS calculados consideran 2 operaciones por multiplicación (suma y multiplicación)
+- Libera todos los recursos OpenCL correctamente en cada iteración
 
 ## 👤 Autor
 
