@@ -1,0 +1,22 @@
+PC -Justin
+
+----------------------------------
+N = 512
+Tiempo kernel: 2.673 ms
+GFLOPS: 100.44
+Resultado: correct
+----------------------------------
+N = 1024
+Tiempo kernel: 21.373 ms
+GFLOPS: 100.48
+Resultado: correct
+----------------------------------
+N = 2048
+Tiempo kernel: 167.600 ms
+GFLOPS: 102.51
+Resultado: correct
+----------------------------------
+N = 4096
+Tiempo kernel: 2147.850 ms
+GFLOPS: 63.99
+Resultado: correct
