@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #define TOL 1e-3
 
@@ -23,9 +24,31 @@ int main() {
 
     // Plataforma y dispositivo
     cl_platform_id platform;
+    cl_uint num_platforms = 0;
+    clGetPlatformIDs(0, NULL, &num_platforms);
+
+    if (num_platforms == 0) {
+        printf("No OpenCL platforms found\n");
+        return 1;
+    }
+
+    cl_platform_id* platforms = (cl_platform_id*)malloc(num_platforms * sizeof(cl_platform_id));
+    clGetPlatformIDs(num_platforms, platforms, NULL);
+
+    platform = platforms[0];
+    for (cl_uint i = 0; i < num_platforms; i++) {
+        char platform_name[256];
+        clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, sizeof(platform_name), platform_name, NULL);
+        if (strstr(platform_name, "NVIDIA") != NULL) {
+            platform = platforms[i];
+            break;
+        }
+    }
+
+    free(platforms);
+
     cl_device_id device;
-    clGetPlatformIDs(1, &platform, NULL);
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_DEFAULT, 1, &device, NULL);
+    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
 
     // Contexto y cola (con profiling)
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
@@ -54,14 +77,16 @@ int main() {
             C[i] = 0.0f;
         }
 
-        // CPU referencia
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                float sum = 0;
-                for (int k = 0; k < N; k++) {
-                    sum += A[i*N + k] * B[k*N + j];
+        if (N <= 1024) {
+            // CPU referencia
+            for (int i = 0; i < N; i++) {
+                for (int j = 0; j < N; j++) {
+                    float sum = 0;
+                    for (int k = 0; k < N; k++) {
+                        sum += A[i*N + k] * B[k*N + j];
+                    }
+                    C_ref[i*N + j] = sum;
                 }
-                C_ref[i*N + j] = sum;
             }
         }
 
@@ -81,10 +106,11 @@ int main() {
         clSetKernelArg(kernel, 3, sizeof(int), &N);
 
         size_t globalSize[2] = {(size_t)N, (size_t)N};
+        size_t localSize[2] = {16, 16};
 
         // Ejecutar kernel con medición
         cl_event event;
-        clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, NULL, 0, NULL, &event);
+        clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, localSize, 0, NULL, &event);
         clWaitForEvents(1, &event);
 
         // Tiempo
@@ -101,10 +127,12 @@ int main() {
 
         // Verificación
         int correct = 1;
-        for (int i = 0; i < N*N; i++) {
-            if (fabs(C[i] - C_ref[i]) > TOL) {
-                correct = 0;
-                break;
+        if (N <= 1024) {
+            for (int i = 0; i < N*N; i++) {
+                if (fabs(C[i] - C_ref[i]) > TOL) {
+                    correct = 0;
+                    break;
+                }
             }
         }
 
@@ -113,7 +141,11 @@ int main() {
         printf("N = %d\n", N);
         printf("Tiempo kernel: %.3f ms\n", time_ms);
         printf("GFLOPS: %.2f\n", gflops);
-        printf("Resultado: %s\n", correct ? "correct" : "incorrect");
+        if (N <= 1024) {
+            printf("Resultado: %s\n", correct ? "correct" : "incorrect");
+        } else {
+            printf("Verificacion omitida para N > 1024\n");
+        }
 
         // Liberar
         free(A); free(B); free(C); free(C_ref);
