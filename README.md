@@ -17,6 +17,15 @@ Programa que implementa multiplicación de matrices utilizando **OpenCL** para p
 
 ## 🛠️ Requisitos
 
+### En Fedora (entorno actual)
+```bash
+# Headers y librerías de OpenCL (compatibles con OpenCL-ICD-Loader)
+sudo dnf install opencl-headers OpenCL-ICD-Loader-devel
+
+# Compilador C++
+sudo dnf install gcc-c++
+```
+
 ### En Ubuntu/Debian
 ```bash
 # Headers y librerías de OpenCL
@@ -32,6 +41,13 @@ sudo apt-get install build-essential
 
 ## 🔧 Compilación
 
+### Fedora/Linux 
+```bash
+g++ taller.cpp -o taller -lOpenCL
+
+./taller
+```
+
 ### Ubuntu/Linux
 ```bash
 g++ taller.cpp -o taller -lOpenCL
@@ -46,6 +62,11 @@ g++ -o taller.exe taller.cpp -lOpenCL
 ```
 
 ## ▶️ Ejecución
+
+### Fedora/Linux 
+```bash
+./taller
+```
 
 ### Ubuntu/Linux
 ```bash
